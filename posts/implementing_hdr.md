@@ -31,7 +31,7 @@ If you follow some of Microsoft's examples from their [DirectXTK](https://github
 
 # Using the Upgraded Swap Chain to Implement HDR Output
 
-Once I got the original code working with the upgraded swap chain I started changing everything required to get HDR working. To start I just forced it directly into HDR output (e.g. no way to not use HDR outupt), you can go back and change things to support both, at least I found it easier this way.
+Once I got the original code working with the upgraded swap chain I started changing everything required to get HDR working. To start I just forced it directly into HDR output (e.g. no way to not use HDR output), you can go back and change things to support both, at least I found it easier this way.
 
 [This resource from Microsoft goes over pretty much everything I'm going to be talking about in this section in more detail.](https://learn.microsoft.com/en-us/windows/win32/direct3darticles/high-dynamic-range)
 
@@ -207,7 +207,7 @@ Actual adjustment:
 color = HDR10_TransformColorspace_ToTarget(color);
 ```
 
-The reason you do this before tonemapping is that, before you apply tonemapping, HDR values (i.e. color channel values `> 1.0`) are normally outside the gamut and tonemapping will map them to values inside the gamut (i.e. in `[0, 1]`), but if you apply the color space transform before tonemapping, it slightly shrinks the colors (since color values in the at the boundary of sRGB/Rec.709 are smaller within the gamut of larger color spaces like DCI-P3 or Rec.2020), moving some colors that were `> 1.0` into SDR so they don't saturate to white as quickly.
+The reason you do this before tonemapping is that, before you apply tonemapping, HDR values (i.e. color channel values `> 1.0`) are normally outside the gamut and tonemapping will map them to values inside the gamut (i.e. in `[0, 1]`), but if you apply the color space transform before tonemapping, it slightly shrinks the colors (since color values in at the boundary of sRGB/Rec.709 are smaller values within the gamut of larger color spaces like DCI-P3 or Rec.2020), moving some colors that were `> 1.0` into SDR so they don't saturate to white as quickly.
 
 <p align="center"><a href="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/CIE1931xy_gamut_comparison_of_sRGB_P3_Rec2020.svg/1024px-CIE1931xy_gamut_comparison_of_sRGB_P3_Rec2020.svg.png"><img src="https://upload.wikimedia.org/wikipedia/commons/thumb/b/b3/CIE1931xy_gamut_comparison_of_sRGB_P3_Rec2020.svg/1024px-CIE1931xy_gamut_comparison_of_sRGB_P3_Rec2020.svg.png" width="400"/></a></p>
 <p align="center"><a href="https://en.wikipedia.org/wiki/Rec._2020#/media/File:CIE1931xy_gamut_comparison_of_sRGB_P3_Rec2020.svg">Source: Myndex, Wikipedia</a></p>
@@ -255,7 +255,7 @@ if (HDR10_USE_TONEMAP_MODE_LUMINANCE) {
 
 ## 5. Transform to Display Color Space
 
-If you remember from when you set the swap chain color space, Windows is expecting to receive a color in the Rec.2020 color space, so we need to convert the tonemapped output (in whatever color space the user selected) to the Rec.2020 color space. This again shrinks the values slightly (unless the user selected Rec.2020), which makes sense since the gamut is larger.
+If you remember from when we set the swap chain color space, Windows is expecting to receive a color in the Rec.2020 color space, so we need to convert the tonemapped output (in whatever color space the user selected) to the Rec.2020 color space. This again shrinks the values slightly (unless the user selected Rec.2020), which makes sense since the gamut is larger.
 
 Supporting functions and constants:
 ```c
@@ -320,10 +320,23 @@ And we're done! We can send that color to the backbuffer and it will display the
 
 One tool that I found very useful was [Lilium's HDR Analysis Shader for ReShade](https://github.com/EndlesslyFlowering/ReShade_HDR_shaders)
 
-This shader will display the max luminance, color gamut output, and a bunch of other useful stuff useful for making sure you're sending the correct values to the display, so go check that out if you want to make sure you did everything correctly.
+This shader will display the max luminance, color gamut output, and a bunch of other useful information for making sure you're sending the correct values to the display, so go check that out if you want to make sure you did everything correctly.
 
 ![Screenshot of the HDR analysis overlay](../res/hdr_analysis.jpg)
 
-# Further Work
+# Future Work
 
 For more advanced color correction, you can implement color grading LUTs in HDR. This is possible by converting to a logarithmic space before doing the lookup then converting back to linear.
+
+# Further Reading and Other Resources
+
+* [Another color transform matrix calculator that uses the primaries and whitepoints of a color space](https://www.russellcottrell.com/photo/matrixCalculator.htm)
+* [Textbook on Color Appearance Models](https://onlinelibrary.wiley.com/doi/book/10.1002/9781118653128)
+* [Textbook on Color Imaging](https://dl.acm.org/doi/book/10.5555/1386684)
+* [Blog post comparing tonemappers](https://bruop.github.io/tonemapping/)
+* [Slides on tonemapping](https://www.cl.cam.ac.uk/teaching/1920/AdvGraphIP/07_HDR_and_tone_mapping.pdf)
+* [Blog post on localized tonemapping in real-time rendering](https://bartwronski.com/2022/02/28/exposure-fusion-local-tonemapping-for-real-time-rendering/)
+* [Rec.709 spec](https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.709-6-201506-I!!PDF-E.pdf)
+* [Rec.2020 spec](https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2020-2-201510-I!!PDF-E.pdf)
+* [DCI-P3 spec](https://www.dcimovies.com/dci-specification)
+* [ST2084 PQ spec](https://www.itu.int/dms_pubrec/itu-r/rec/bt/R-REC-BT.2100-2-201807-I!!PDF-E.pdf)
